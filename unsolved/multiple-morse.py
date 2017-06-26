@@ -8,23 +8,28 @@ morse = {  '.-'  :'A','-...':'B', '-.-.':'C','-..' :'D',
            '..-' :'U','...-':'V', '.--' :'W','-..-':'X', 
            '-.--':'Y','--..':'Z' }
 
+@profile
 def generate_substrings(words):
     substrings = []
     for i in range(max_length):
-        substrings.append(set())
+        substrings.append({})
         for word in words:
-            substrings[i].add(word[0:i+1])
+            substrings[i][word[0:i+1]] = True
     return substrings
 
+@profile
 def check_new_morse_code(possible, new_morse):
     #If the new morse code in the table
     if (new_morse in morse):
         #Make a new word
-        new_word = (possible[0]+morse[new_morse])
+        #new_word = possible[0][-1]+morse[new_morse]
+        new_word = possible[0][:]
+        new_word[-1] += morse[new_morse]
 
         #Get the end word, ie "ABC XY" = "XY" and "ABC " = ""
-        split = new_word.split()
-        word = split[-1] if split and not new_word.endswith(' ') else ''
+        #split = new_word.split()
+        #word = split[-1] if split and not new_word.endswith(' ') else ''
+        word = new_word[-1]
 
         #Check if the new word is a valid substring of the words list
         if (len(word) <= len(substrings) and word in substrings[len(word)-1]):
@@ -35,10 +40,10 @@ def check_new_morse_code(possible, new_morse):
         #Remove if the morse code becomes too large
         remove.append(i)
 
+@profile
 def check_new_word(possible, new_word):
     #Get the end word, ie "ABC XY" = "XY" and "ABC " = ""
-    split = new_word.split()
-    word = split[-1] if split and not new_word.endswith(' ') else ''
+    word = new_word[-1]
 
     #If the word is too long then remove it
     if (len(word) > len(substrings)):
@@ -52,7 +57,7 @@ def check_new_word(possible, new_word):
             x = morse[new_morse]
             if (x in substrings[0]):
                 #Append the word and the new character
-                possibilities.append((new_word+' '+x, ''))
+                possibilities.append(([new_word,x], ''))
 
 for _ in range(int(input())):
     #Read blank
@@ -68,7 +73,7 @@ for _ in range(int(input())):
 
     substrings = generate_substrings(words)
 
-    possibilities = [('','')]
+    possibilities = [([''],'')]
     #print(substrings)
 
     #Add space for one more iteration to remove the final batch
