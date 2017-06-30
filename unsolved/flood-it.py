@@ -7,9 +7,9 @@ directions = [(0,1),(0,-1),(-1,0),(1,0)]
 
 def valid_pos(grid, cell, direction):
     pos = (cell[0]+direction[0], cell[1]+direction[1])
-    if (pos[0] < 0 or pos[0] > n-1):
+    if (pos[0] < 0 or pos[0] > len(grid)-1):
         return False,False
-    if (pos[1] < 0 or pos[1] > n-1):
+    if (pos[1] < 0 or pos[1] > len(grid)-1):
         return False,False
     if (grid[cell[1]][cell[0]] == grid[pos[1]][pos[0]]):
         return pos,True
@@ -59,9 +59,17 @@ def next_move(grid, cells, direction):
         yield replace_color(grid, cells, grid[pos[1]][pos[0]])
 
 cache = {}
-def flood_it(grid, cells):
+def flood_it(grid, cells, current_move):
     if (finished(grid)):
-        return 0
+        
+        #Cache the result
+        string = ' '.join([str(j) for i in grid for j in i])
+        if string in cache:
+            cache[string] = min(cache[string], current_move)
+        else:
+            cache[string] = current_move
+
+        return current_move
     
     #TODO Should probably change this so it is set initially
     min_moves = 10000
@@ -84,29 +92,28 @@ def flood_it(grid, cells):
 
             new_grids.append(new_grid)
 
-            moves = 0
+            moves = 100
             if string in cache:
                 moves = cache[string]
-            else:
-                moves = 1+flood_it(new_grid, new_cells)
+
+            if (current_move < moves):
+                moves = flood_it(new_grid, new_cells, current_move+1)
 
             min_moves = min(min_moves, moves)
 
-        for new_grid in new_grids:
-            string = ' '.join([str(j) for i in new_grid for j in i])
-            cache[string] = min_moves
-
     return min_moves
 
-n = int(input())
-while (n > 0):
-    grid = []
-    for _ in range(n):
-        grid.append(list(map(int, input().split())))
-
-    _, cells = replace_color(grid, [(0,0)], grid[0][0])
-
-    cache = {}
-    print(flood_it(grid,cells))
+def main():
     n = int(input())
+    while (n > 0):
+        grid = []
+        for _ in range(n):
+            grid.append(list(map(int, input().split())))
+
+        _, cells = replace_color(grid, [(0,0)], grid[0][0])
+
+        cache = {}
+        print(flood_it(grid,cells,0))
+        n = int(input())
     
+main()

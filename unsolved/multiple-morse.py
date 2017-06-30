@@ -1,104 +1,132 @@
 #!/bin/env python
 
-morse = {  '.-'  :'A','-...':'B', '-.-.':'C','-..' :'D', 
-           '.'   :'E','..-.':'F', '--.' :'G','....':'H', 
-           '..'  :'I','.---':'J', '-.-' :'K','.-..':'L', 
-           '--'  :'M','-.'  :'N', '---' :'O','.--.':'P', 
-           '--.-':'Q','.-.' :'R', '...' :'S','-'   :'T', 
-           '..-' :'U','...-':'V', '.--' :'W','-..-':'X', 
-           '-.--':'Y','--..':'Z' }
+morse_table = {  '.-'  :'A','-...':'B', '-.-.':'C','-..' :'D', 
+                 '.'   :'E','..-.':'F', '--.' :'G','....':'H', 
+                 '..'  :'I','.---':'J', '-.-' :'K','.-..':'L', 
+                 '--'  :'M','-.'  :'N', '---' :'O','.--.':'P', 
+                 '--.-':'Q','.-.' :'R', '...' :'S','-'   :'T', 
+                 '..-' :'U','...-':'V', '.--' :'W','-..-':'X', 
+                 '-.--':'Y','--..':'Z' }
 
-@profile
-def generate_substrings(words):
+#@profile
+def generate_substrings(words, max_length):
     substrings = []
     for i in range(max_length):
         substrings.append({})
         for word in words:
-            substrings[i][word[0:i+1]] = True
+            substrings[i][word[0:i+1]] = None
     return substrings
 
-@profile
-def check_new_morse_code(possible, new_morse):
+#@profile
+def check_morse_code(possible, substrings, words_generated):
+    morse = possible[1]
+
     #If the new morse code in the table
-    if (new_morse in morse):
-        #Make a new word
-        #new_word = possible[0][-1]+morse[new_morse]
-        new_word = possible[0][:]
-        new_word[-1] += morse[new_morse]
+    if (morse in morse_table):
+        wordp = possible[0]+morse_table[morse]
 
-        #Get the end word, ie "ABC XY" = "XY" and "ABC " = ""
-        #split = new_word.split()
-        #word = split[-1] if split and not new_word.endswith(' ') else ''
-        word = new_word[-1]
+        for gen_word in words_generated:
+            word = gen_word[1] + wordp
+            word_len = len(word)
 
-        #Check if the new word is a valid substring of the words list
-        if (len(word) <= len(substrings) and word in substrings[len(word)-1]):
-            #If so reset the morse code and add the new word
-            #print("Adding", new_word)
-            possibilities.append((new_word, ''))
-    elif (len(new_morse) > 4):
+            #Check if the new word is a valid substring of the words list
+            if (word_len <= len(substrings) and word in substrings[word_len-1]):
+                #If so reset the morse code and add the new word
+                #print("Adding", word)
+                return (word, ''),False
+    elif (len(morse) >= 4):
         #Remove if the morse code becomes too large
-        remove.append(i)
+        return (),True
+    return None,False
 
-@profile
-def check_new_word(possible, new_word):
-    #Get the end word, ie "ABC XY" = "XY" and "ABC " = ""
-    word = new_word[-1]
+#@profile
+def check_word(possible, substrings, words, words_generated, ci):
+    wordp = possible[0]
+    morse = possible[1]
 
     #If the word is too long then remove it
-    if (len(word) > len(substrings)):
-        remove.append(i)
-        return
-    elif (word in words):
-        #If a full word is found
-        #print("Full word found", repr(new_word))
+    if (len(wordp) > len(substrings)):
+        return True
 
-        if (new_morse in morse):
-            x = morse[new_morse]
-            if (x in substrings[0]):
-                #Append the word and the new character
-                possibilities.append(([new_word,x], ''))
+    if (wordp == ''):
+        return False
 
-for _ in range(int(input())):
-    #Read blank
-    input()
-    string = input()
+    for gen_word in words_generated[:]:
+        word = gen_word[1] + wordp
+        print(word, gen_word, wordp)
+        if (word in words):
+            #If a full word is found
+            print("Full word found", repr(word))
+            words_generated.append((ci,word))
+            return -1
+    return False
 
-    max_length = 0
-    words = {}
-    for _ in range(int(input())):
-        word = input()
-        max_length = max(max_length, len(word))
-        words[word] = True
+#@profile
+def generate_possiblities(string, words, substrings):
 
-    substrings = generate_substrings(words)
+    words_generated = [(0,'')]
 
-    possibilities = [([''],'')]
-    #print(substrings)
+    possibilities = [('','')]
 
-    #Add space for one more iteration to remove the final batch
-    for c in string+' ':
+    for ci,c in enumerate(string+' '):
         #print(possibilities)
         #print(len(possibilities))
 
         remove = []
-        for i,possible in enumerate(possibilities[:]):
-            #print()
-            #print(possibilities)
+        for pi,possible in enumerate(possibilities[:]):
+            print()
+            print(possibilities)
 
-            new_morse = possible[1]+c
-            check_new_morse_code(possible, new_morse)
+            possible = (possible[0], possible[1]+c)
+            possibilities[pi] = possible
 
-            new_word = possible[0]
-            check_new_word(possible, new_word)
-           
-            #Modify the original
-            possibilities[i] = (new_word, new_morse) 
+            remove_possible = check_word(possible, substrings, words, words_generated, ci)
+            if (remove_possible == -1):
+                print("Test", possible)
+                possible = ('',possible[1])
+                possibilities[pi] = possible
+            elif (remove_possible):
+                #del possibilities[pi]
+                remove.append(pi)
+                continue
+
+            new_possible, remove_possible = check_morse_code(possible, substrings, words_generated)
+            if (remove_possible):
+                #del possibilities[pi]
+                print("Remove", possible)
+                remove.append(pi)
+                continue
+            elif (new_possible is not None):
+                possibilities.append(new_possible)
+
 
         for i in reversed(remove):
-            #print("Removing", possibilities[i])
             del possibilities[i]
+           
+    print(words_generated)
 
     #print(possibilities)
-    print(sum(True for x in possibilities if x[1] == ' '))
-    #print(list(filter(lambda x: x[1] == '', possibilities)))
+    #print(total)
+    return possibilities
+
+
+def main():
+    for _ in range(int(input())):
+        #Read blank
+        input()
+        string = input()
+
+        max_length = 0
+        words = {}
+        for _ in range(int(input())):
+            word = input()
+            max_length = max(max_length, len(word))
+            words[word] = None
+
+        substrings = generate_substrings(words, max_length)
+        possibilities = generate_possiblities(string, words, substrings)
+
+        print(sum(True for x in possibilities if x[1] == ' '))
+        #print(list(filter(lambda x: x[1] == '', possibilities)))
+
+main()
