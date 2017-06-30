@@ -4,42 +4,28 @@ import java.io.IOException;
 import java.util.*;
 import java.util.AbstractMap.*;
 
+class Node {
+	String program;
+	ArrayList<Node> parents;
+	ArrayList<Node> children;
+
+	Node(String program, ArrayList<Node> parent, ArrayList<Node> dependencies) {
+		this.program = program;
+		this.parents = parent;
+		this.children = dependencies;
+	}
+}
+
 class Main {
 	
 	public static void main(String[] args) {
-		
 		Main m = new Main();
 
-		Vector<String> commands = new Vector<>();
 		Scanner scanner = new Scanner(System.in);
-		String input = scanner.nextLine();
-		while (!input.equals("END")) {
-			commands.add(input);
-			input = scanner.nextLine();
-			//System.out.println(input);
+		while (scanner.hasNextLine()) {
+			String input = scanner.nextLine();
+			m.parse(input);
 		}
-		m.runNCommands(commands, commands.size()+1);
-	}
-	
-	public final Integer MAXCOMS = 1000;
-
-	class Node {
-		String program;
-		ArrayList<Node> parents;
-		ArrayList<Node> children;
-
-		Node(String program, ArrayList<Node> parent, ArrayList<Node> dependencies) {
-			this.program = program;
-			this.parents = parent;
-			this.children = dependencies;
-		}
-	}
-
-	enum Level {
-		PASS,
-		CREDIT,
-		DISTINCTION_SMALL,
-		DISTINCTION_LARGE
 	}
 
 	private boolean cancelCommands = false;
@@ -56,32 +42,36 @@ class Main {
 		explicityInstalled = new HashSet<>();
 	}
 
-	private void parse(Vector<String> commands, Integer N, Level level) {
-		for (String command : commands.subList(0, Math.min(commands.size(), N))) {
-			//Echo command
-			System.out.println(command);
+	private void parse(String command) {
+		//Echo command
 
-			String[] args = command.split("\\s+");
-			//System.out.println(Arrays.toString(args));
-			switch (args[0]) {
-				case "DEPEND":
-					depends(args[1], Arrays.copyOfRange(args, 2, args.length), level);
-					break;
+		String[] args = command.split("\\s+");
+		//System.out.println(Arrays.toString(args));
+		switch (args[0]) {
+			case "DEPEND":
+				System.out.println(command);
+				depends(args[1], Arrays.copyOfRange(args, 2, args.length));
+				break;
 
-				case "INSTALL":
-					if (!cancelCommands) install(args[1]);
-					break;
+			case "INSTALL":
+				System.out.println(command);
+				if (!cancelCommands) install(args[1]);
+				break;
 
-				case "REMOVE":
-					if (!cancelCommands) remove(args[1]);
-					break;
+			case "REMOVE":
+				System.out.println(command);
+				if (!cancelCommands) remove(args[1]);
+				break;
 
-				case "LIST":
-					if (!cancelCommands) list();
-					break;
-			}
+			case "LIST":
+				System.out.println(command);
+				if (!cancelCommands) list();
+				break;
+
+			case "END":
+				System.out.println(command);
+				break;
 		}
-		System.out.println("END");
 	}
 
 	//Already seen nodes while traversing the tree
@@ -104,7 +94,7 @@ class Main {
 		return new int[]{min, max};
 	}
 
-	private void depends(String program, String[] requires, Level level) {
+	private void depends(String program, String[] requires) {
 		Node parent = dependencies.get(program);
 		if (parent == null) {
 			parent = new Node(program, new ArrayList<Node>(), null);
@@ -112,11 +102,7 @@ class Main {
 		ArrayList<Node> requirements = new ArrayList<>();
 
 		for (String requirement : requires) {
-			Node node = dependencies.get(requirement);
-			if (node == null) {
-				node = new Node(requirement, new ArrayList<Node>(), new ArrayList<Node>());
-				dependencies.put(requirement, node);
-			}
+			Node node = dependencies.computeIfAbsent(requirement, r -> new Node(r, new ArrayList<Node>(), new ArrayList<Node>()));
 			node.parents.add(parent);
 			requirements.add(node);
 		}
@@ -125,26 +111,9 @@ class Main {
 		//Reset seen
 		seen = new HashSet<>();
 		int[] minimax = traverseUp(parent, 0, program);
-		
+
 		if ((minimax[0] != Integer.MAX_VALUE && minimax[1] != Integer.MIN_VALUE) || cancelCommands) {
 			print("Found cycle in dependencies");
-
-			if (level == Level.DISTINCTION_SMALL || level == Level.DISTINCTION_LARGE) {
-				//I'm not sure if we can use Java 8 with String.join()
-				if (minimax[0] <= smallestCycle.getKey()) {
-					StringBuilder string = new StringBuilder(program);
-					for (String i : requires) string.append(" ").append(i);
-					smallestCycle = new SimpleEntry<>(minimax[0], string.toString());
-				}
-
-				if (minimax[1] >= largestCycle.getKey()) {
-					StringBuilder string = new StringBuilder(program);
-					for (String i : requires) string.append(" ").append(i);
-					largestCycle = new SimpleEntry<>(minimax[1], string.toString());
-				}
-				print("Suggest removing DEPEND", level == Level.DISTINCTION_SMALL ? smallestCycle.getValue() : largestCycle.getValue());
-			}
-
 			cancelCommands = true;
 		}
 
@@ -154,24 +123,24 @@ class Main {
 	//I wonder if this can be done with a stack?
 	private void installHelper(Node root) {
 		if (installed.contains(root.program)) return;
-	
+
 		if (root.children != null) {
 			for (Node requirement : root.children) {
 				installHelper(requirement);
 			}
 		}
-		
+
 		print("Installing", root.program);
 		installed.add(root.program);
 	}
-	
+
 	private void install(String program) {
-		explicityInstalled.add(program);
-		
 		if (installed.contains(program)) {
 			print(program, "is already installed.");
 			return;
 		}
+
+		explicityInstalled.add(program);
 
 		//Get the programs dependencies
 		Node node = dependencies.get(program);
@@ -183,36 +152,64 @@ class Main {
 		}
 	}
 
+	private void removeHelper(Node child) {
+		if (!installed.contains(child.program)) return;
+		if (explicityInstalled.contains(child.program)) return;
+
+		boolean remove = true;
+		for (Node parent : child.parents) {
+			if (installed.contains(parent.program)) {
+				remove = false;
+				break;
+			}
+		}
+
+		if (remove) {
+			print("Removing", child.program);
+			installed.remove(child.program);
+		}
+
+		for (Node node : child.children) {
+			removeHelper(node);
+		}
+	}
+
 	private void remove(String program) {
 		//System.out.println(explicityInstalled);
-		
+
 		if (!installed.contains(program)) {
 			print(program, "is not installed.");
 			return;
 		}
-		
+
 		//First check if it is required
 		Node node = dependencies.get(program);
-		for (Node parent : node.parents) {
-			if (installed.contains(parent.program)) {
-				print(program, "is still needed");
-				return;
+
+		if (node != null) {
+			for (Node parent : node.parents) {
+				if (installed.contains(parent.program)) {
+					print(program, "is still needed");
+					return;
+				}
 			}
 		}
-		
-		//Start to remove it
-		print("Removing", program);
-		installed.remove(program);
-		explicityInstalled.remove(program);
 
-		Stack<Node> todo = new Stack<>();
-		for (Node child : node.children) todo.add(child);
-		
+		//Start to remove it
+		//print("Removing", program);
+		//installed.remove(program);
+		explicityInstalled.remove(program);
+		if (node != null) removeHelper(node);
+
+/*		Stack<Node> todo = new Stack<>();
+		if (node != null) todo.addAll(node.children);
+
+		//TODO Convert to a breadth first removal pattern
 		while (!todo.empty()) {
-			Node child = todo.pop();
-			
+			Node child = todo.remove(0);
+
+			if (!installed.contains(child.program)) continue;
 			if (explicityInstalled.contains(child.program)) continue;
-			
+
 			boolean remove = true;
 			for (Node parent : child.parents) {
 				if (installed.contains(parent.program)) {
@@ -220,14 +217,14 @@ class Main {
 					break;
 				}
 			}
-			
-			for (Node x : child.children) todo.add(x);
-			
+
+			todo.addAll(child.children);
+
 			if (remove) {
 				print("Removing", child.program);
 				installed.remove(child.program);
 			}
-		}
+		}*/
 	}
 
 	private void list() {
@@ -238,32 +235,6 @@ class Main {
 		System.out.print("  ");
 		for (String line : lines) System.out.print(" "+line);
 		System.out.println();
-	}
-
-	public void runNCommands (Vector<String> commands, Integer N) {
-		// PRE: commands contains set of commands read in by readCommandsFromFile()
-		// POST: executed min(N, all) commands
-		parse(commands, N, Level.PASS);
-	}
-	
-	public void runNCommandswCheck (Vector<String> commands, Integer N) {
-		// PRE: commands contains set of commands read in by readCommandsFromFile()
-		// POST: executed min(N, all) commands, checking for cycles
-		parse(commands, N, Level.CREDIT);
-	}
-	
-	public void runNCommandswCheckRecLarge (Vector<String> commands, Integer N) {
-		// PRE: commands contains set of commands read in by readCommandsFromFile()
-		// POST: executed min(N, all) commands, checking for cycles and 
-		//       recommending fix by removing largest cycle
-		parse(commands, N, Level.DISTINCTION_LARGE);
-	}
-
-	public void runNCommandswCheckRecSmall (Vector<String> commands, Integer N) {
-		// PRE: commands contains set of commands read in by readCommandsFromFile()
-		// POST: executed min(N, all) commands, checking for cycles and 
-		//       recommending fix by removing smallest cycle
-		parse(commands, N, Level.DISTINCTION_SMALL);
 	}
 }
 		
