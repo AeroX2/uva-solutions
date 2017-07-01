@@ -184,7 +184,6 @@ class Main {
 
 		//First check if it is required
 		Node node = dependencies.get(program);
-
 		if (node != null) {
 			for (Node parent : node.parents) {
 				if (installed.contains(parent.program)) {
@@ -194,37 +193,8 @@ class Main {
 			}
 		}
 
-		//Start to remove it
-		//print("Removing", program);
-		//installed.remove(program);
 		explicityInstalled.remove(program);
 		if (node != null) removeHelper(node);
-
-/*		Stack<Node> todo = new Stack<>();
-		if (node != null) todo.addAll(node.children);
-
-		//TODO Convert to a breadth first removal pattern
-		while (!todo.empty()) {
-			Node child = todo.remove(0);
-
-			if (!installed.contains(child.program)) continue;
-			if (explicityInstalled.contains(child.program)) continue;
-
-			boolean remove = true;
-			for (Node parent : child.parents) {
-				if (installed.contains(parent.program)) {
-					remove = false;
-					break;
-				}
-			}
-
-			todo.addAll(child.children);
-
-			if (remove) {
-				print("Removing", child.program);
-				installed.remove(child.program);
-			}
-		}*/
 	}
 
 	private void list() {
