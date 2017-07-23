@@ -28,13 +28,9 @@ class Main {
 		}
 	}
 
-	private boolean cancelCommands = false;
 	private HashMap<String, Node> dependencies;
 	private Set<String> installed;
 	private Set<String> explicityInstalled;
-
-	private SimpleEntry<Integer, String> smallestCycle = new SimpleEntry<>(Integer.MAX_VALUE, "");
-	private SimpleEntry<Integer, String> largestCycle = new SimpleEntry<>(Integer.MIN_VALUE, "");
 
 	public Main() {
 	    dependencies = new HashMap<>();
@@ -44,54 +40,27 @@ class Main {
 
 	private void parse(String command) {
 		//Echo command
+		System.out.println(command);
 
 		String[] args = command.split("\\s+");
-		//System.out.println(Arrays.toString(args));
 		switch (args[0]) {
+
 			case "DEPEND":
-				System.out.println(command);
 				depends(args[1], Arrays.copyOfRange(args, 2, args.length));
 				break;
 
 			case "INSTALL":
-				System.out.println(command);
-				if (!cancelCommands) install(args[1]);
+				install(args[1]);
 				break;
 
 			case "REMOVE":
-				System.out.println(command);
-				if (!cancelCommands) remove(args[1]);
+				remove(args[1]);
 				break;
 
 			case "LIST":
-				System.out.println(command);
-				if (!cancelCommands) list();
-				break;
-
-			case "END":
-				System.out.println(command);
+				list();
 				break;
 		}
-	}
-
-	//Already seen nodes while traversing the tree
-	private Set<String> seen;
-	private int[] traverseUp(Node child, int level, String compare) {
-		if (child.parents.size() == 0) return new int[]{Integer.MAX_VALUE, Integer.MIN_VALUE};
-
-		int min = Integer.MAX_VALUE;
-		int max = Integer.MIN_VALUE;
-		for (Node parent : child.parents) {
-			if (parent.program.equals(compare)) return new int[]{level, level};
-
-			if (seen.contains(parent.program)) continue;
-			seen.add(parent.program);
-
-			int[] result = traverseUp(parent, level+1, compare);
-			min = Math.min(min, result[0]);
-			max = Math.max(max, result[1]);
-		}
-		return new int[]{min, max};
 	}
 
 	private void depends(String program, String[] requires) {
@@ -99,23 +68,14 @@ class Main {
 		if (parent == null) {
 			parent = new Node(program, new ArrayList<Node>(), null);
 		}
-		ArrayList<Node> requirements = new ArrayList<>();
 
+		ArrayList<Node> requirements = new ArrayList<>();
 		for (String requirement : requires) {
 			Node node = dependencies.computeIfAbsent(requirement, r -> new Node(r, new ArrayList<Node>(), new ArrayList<Node>()));
 			node.parents.add(parent);
 			requirements.add(node);
 		}
 		parent.children = requirements;
-
-		//Reset seen
-		seen = new HashSet<>();
-		int[] minimax = traverseUp(parent, 0, program);
-
-		if ((minimax[0] != Integer.MAX_VALUE && minimax[1] != Integer.MIN_VALUE) || cancelCommands) {
-			print("Found cycle in dependencies");
-			cancelCommands = true;
-		}
 
 		dependencies.put(program, parent);
 	}
@@ -135,12 +95,12 @@ class Main {
 	}
 
 	private void install(String program) {
+		explicityInstalled.add(program);
+
 		if (installed.contains(program)) {
 			print(program, "is already installed.");
 			return;
 		}
-
-		explicityInstalled.add(program);
 
 		//Get the programs dependencies
 		Node node = dependencies.get(program);
@@ -187,7 +147,7 @@ class Main {
 		if (node != null) {
 			for (Node parent : node.parents) {
 				if (installed.contains(parent.program)) {
-					print(program, "is still needed");
+					print(program, "is still needed.");
 					return;
 				}
 			}

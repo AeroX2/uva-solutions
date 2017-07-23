@@ -4,7 +4,7 @@ from math import log,floor
 
 def get_pairs(x):
     for i in range(floor(log(x,1)-1),x+1):
-        if str(i) in str(x - i)a
+        if str(i) in str(x - i):
             yield (i, x-i)
 
 for _ in range(int(input())):
@@ -12,5 +12,8 @@ for _ in range(int(input())):
     input()
     n = int(input())
     pairs = get_pairs(n)
+
+    for pair in pairs:
+        print(pair)
 
 
