@@ -2,10 +2,10 @@
 
 from collections import deque
 
-class Point:
-    def __init__(self, x,y):
-        self.x = x
-        self.y = y
+from ctypes import *
+
+class Point(Structure):
+    _fields_ = [("x", c_int), ("y", c_int)]
 
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
@@ -19,16 +19,33 @@ class Point:
     def __repr__(self):
         return "Point(%d,%d)" % (self.x,self.y)
 
+#class Point:
+#    def __init__(self, x,y):
+#        self.x = x
+#        self.y = y
+#
+#    def __eq__(self, other):
+#        return self.x == other.x and self.y == other.y
+#
+#    def __hash__(self):
+#        return hash((self.x,self.y))
+#
+#    def __str__(self):
+#        return "X: %d Y: %d" % (self.x,self.y)
+#
+#    def __repr__(self):
+#        return "Point(%d,%d)" % (self.x,self.y)
+
 directions = [Point(0,1),Point(0,-1),Point(-1,0),Point(1,0)]
 
 grid_width = 0
 grid_height = 0
 
 @profile
-def valid_pos(new_pos):
-    if (new_pos.x < 0 or new_pos.x > grid_width):
+def valid_pos(x,y):
+    if (x < 0 or x > grid_width):
         return False
-    if (new_pos.y < 0 or new_pos.y > grid_height):
+    if (y < 0 or y > grid_height):
         return False
     return True
 
@@ -48,12 +65,13 @@ def flood_find(grid, cell):
     perimeter = []
     flooded = []
     for direction in directions:
-        new_cell = Point(cell.x+direction.x, cell.y+direction.y)
+        x = cell.x+direction.x
+        y = cell.y+direction.y
+        if (valid_pos(x,y)):
+            new_cell = Point(cell.x+direction.x, cell.y+direction.y)
+            if (new_cell in seen):
+                continue
 
-        if (new_cell in seen):
-            continue
-
-        if (valid_pos(new_cell)):
             #print(grid[new_cell.y][new_cell.x])
             if (same_color(grid, new_cell, cell)):
                 #Same color
@@ -91,6 +109,8 @@ def replace_color(grid, flooded, perimeter, new_color):
     seen = {}
     for cell in flooded:
         seen[cell] = None
+    for cell in perimeter:
+        seen[cell] = None
 
     for cell in perimeter:
         p,f = flood_find(new_grid, cell)
@@ -98,6 +118,8 @@ def replace_color(grid, flooded, perimeter, new_color):
         new_flooded.extend(f)
 
         for cell in f:
+            seen[cell] = None
+        for cell in p:
             seen[cell] = None
 
     #print(new_flooded, new_perimeter)
@@ -112,8 +134,10 @@ def get_valid_colors(grid, perimeter):
     colors = set()
     for cell in perimeter:
         for direction in directions:
-            new_cell = Point(cell.x+direction.x, cell.y+direction.y)
-            if (valid_pos(new_cell)):
+            x = cell.x+direction.x
+            y = cell.y+direction.y
+            if (valid_pos(x,y)):
+                new_cell = Point(cell.x+direction.x, cell.y+direction.y)
                 color = grid[new_cell.y][new_cell.x]
                 if (color != perimeter_color):
                     colors.add(color)
