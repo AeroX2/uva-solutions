@@ -19,18 +19,26 @@ while (line):
         for coin in [1,5,10,25,50]:
             div,rem = divmod(cents, coin)
 
-            new_l = sorted(l+[coin])
+            new_l = sorted(l+[(1 if coin == 1 else div,coin)])
             #if (new_l in cache):
             #    continue
 
             if (rem == 0):
-                print('adding', div,rem)
+                print('caching', div,rem)
                 cache.append(new_l)
-            elif (div > 0 and rem > 0):
-                print(coin,rem)
+            elif (div >= 0 and rem >= 0):
+                print('adding', coin,rem)
                 stack.append((rem,new_l))
 
-    output = len(cache)
+    output = 0
+    for x in cache:
+        product = 1
+        for z in x:
+            product *= z[0] 
+        output += product
+    
+    print(cache)
+
     if (output != 1):
         print('There are %d ways to produce %d cents of change.' % (output, n))
     else:
