@@ -42,7 +42,7 @@ class Main {
 		//Echo command
 		System.out.println(command);
 
-		String[] args = command.split("\\s+");
+		String[] args = command.trim().split("\\s+");
 		switch (args[0]) {
 
 			case "DEPEND":
