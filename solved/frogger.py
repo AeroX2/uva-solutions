@@ -21,21 +21,20 @@ def shortest_path(start, end, nodes):
         cost,node,path = heappop(queue)
 
         if (node == end):
-            print(path)
+            return cost
 
         for other_node in nodes:
             if (other_node == node): continue
 
             #print(node, other_node)
-            cost = dist[node] + distance(node,other_node)
+            cost = max(dist[node], distance(node,other_node))
             if (cost < dist[other_node]):
                 dist[other_node] = cost
                 prev[other_node] = node
                 if (other_node not in queue):
                     heappush(queue,(cost,other_node,path+[other_node]))
 
-    print(prev)
-    return dist
+    return None
          
 def main():
     i = 0
@@ -49,14 +48,13 @@ def main():
         freddy = stones[0]
         fiona = stones[1]
 
-        distance = shortest_path(freddy, fiona, stones)
-        print(distance)
+        min_distance = shortest_path(freddy, fiona, stones)
 
-        distance = filter(lambda x: x != 0, distance.values())
-        min_distance = min(distance)
+        #distance = filter(lambda x: x != 0, distance.values())
+        #min_distance = min(distance)
 
         print('Scenario #%d' % (i+1))
-        print('Frog distance = %.3f' % min_distance)
+        print('Frog Distance = %.3f' % min_distance)
         print()
 
         i += 1
