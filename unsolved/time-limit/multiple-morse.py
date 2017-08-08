@@ -8,28 +8,23 @@ morse = {  '.-'  :'A','-...':'B', '-.-.':'C','-..' :'D',
            '..-' :'U','...-':'V', '.--' :'W','-..-':'X', 
            '-.--':'Y','--..':'Z' }
 
-@profile
 def generate_substrings(words):
     substrings = []
     for i in range(max_length):
-        substrings.append({})
+        substrings.append(set())
         for word in words:
-            substrings[i][word[0:i+1]] = True
+            substrings[i].add(word[0:i+1])
     return substrings
 
-@profile
 def check_new_morse_code(possible, new_morse):
     #If the new morse code in the table
     if (new_morse in morse):
         #Make a new word
-        #new_word = possible[0][-1]+morse[new_morse]
-        new_word = possible[0][:]
-        new_word[-1] += morse[new_morse]
+        new_word = (possible[0]+morse[new_morse])
 
         #Get the end word, ie "ABC XY" = "XY" and "ABC " = ""
-        #split = new_word.split()
-        #word = split[-1] if split and not new_word.endswith(' ') else ''
-        word = new_word[-1]
+        split = new_word.split()
+        word = split[-1] if split and not new_word.endswith(' ') else ''
 
         #Check if the new word is a valid substring of the words list
         if (len(word) <= len(substrings) and word in substrings[len(word)-1]):
@@ -40,10 +35,10 @@ def check_new_morse_code(possible, new_morse):
         #Remove if the morse code becomes too large
         remove.append(i)
 
-@profile
 def check_new_word(possible, new_word):
     #Get the end word, ie "ABC XY" = "XY" and "ABC " = ""
-    word = new_word[-1]
+    split = new_word.split()
+    word = split[-1] if split and not new_word.endswith(' ') else ''
 
     #If the word is too long then remove it
     if (len(word) > len(substrings)):
@@ -51,13 +46,14 @@ def check_new_word(possible, new_word):
         return
     elif (word in words):
         #If a full word is found
-        #print("Full word found", repr(new_word))
-
         if (new_morse in morse):
             x = morse[new_morse]
             if (x in substrings[0]):
+                print("Full word found", repr(new_word), i)
                 #Append the word and the new character
-                possibilities.append(([new_word,x], ''))
+                possibilities.append((x, ''))
+                remove.append(i)
+                generated_words.append(new_word)
 
 for _ in range(int(input())):
     #Read blank
@@ -73,12 +69,14 @@ for _ in range(int(input())):
 
     substrings = generate_substrings(words)
 
-    possibilities = [([''],'')]
+    possibilities = [('','')]
     #print(substrings)
+
+    generated_words = []
 
     #Add space for one more iteration to remove the final batch
     for c in string+' ':
-        #print(possibilities)
+        print(possibilities)
         #print(len(possibilities))
 
         remove = []
@@ -100,5 +98,6 @@ for _ in range(int(input())):
             del possibilities[i]
 
     #print(possibilities)
+    print(generated_words)
     print(sum(True for x in possibilities if x[1] == ' '))
     #print(list(filter(lambda x: x[1] == '', possibilities)))
