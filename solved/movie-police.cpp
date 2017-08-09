@@ -6,23 +6,25 @@
 
 using namespace std;
 
-int distance(string clip, string movie) {
+int haming(string clip, string movie) {
 	int min_distance = INT_MAX;
+
 	int movie_len = movie.length();
 	int clip_len = clip.length();
 
-	for (int i = 0; i < movie_len-clip_len+1; i++) {
+	for (int i = 0; i <= movie_len-clip_len; i++) {
 
 		bitset<100> movie_i(movie);
 		bitset<100> clip_i(clip);
 
-		movie_i >>= i;
-		movie_i &= (1 << clip_len)-1;
+		bitset<100> mask;
+		for (int j = 0; j < clip_len; j++) mask[j] = 1;
 
-		int count = (movie_i ^ clip_i).count();
+        int count = (((movie_i >> i) & mask) ^ clip_i).count();
 
 		if (count < min_distance) min_distance = count;
 	}
+
 	return min_distance;
 }
 
@@ -42,29 +44,19 @@ int main() {
 		string clip;
 		getline(cin, clip);
 		
-		//cout << "Clip " << clip << endl;
-
 		int min_distance = INT_MAX;
 		int min_index = 0;
 
 		for (int j=0; j<m; j++) {
-			int haming_distance = distance(clip, movies[j]);
-
-			//cout << "Clip " << clip << endl;
-			//cout << "Movie " << movies[j] << endl;
-			//cout << "Haming " << haming_distance << endl;
+			int haming_distance = haming(clip, movies[j]);
 
 			if (haming_distance < min_distance) {
 				min_distance = haming_distance;
 				min_index = j+1;
 			}
 
-			//cout << "On j " << j << endl;
 		}
 
-		//cout << "Clip " << clip << endl;
-		//cout << "Movie " << movies[min_index-1] << endl;
-		//cout << "Haming " << min_distance << endl;
 		cout << min_index << endl;
 	}
 	
