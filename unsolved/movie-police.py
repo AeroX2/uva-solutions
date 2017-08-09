@@ -1,9 +1,9 @@
 #!/bin/env python
 
 def distance(clip, movie, i, clip_len):
+
     movie >>= i
-    mask = (1 << clip_len)-1
-    movie &= mask
+    movie &= (1 << clip_len)-1
 
     haming_distance = movie ^ clip
 
