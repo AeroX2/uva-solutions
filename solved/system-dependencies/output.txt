@@ -1,0 +1,12 @@
+INSTALL A
+   Installing A
+INSTALL B
+   Installing B
+REMOVE A
+   Removing A
+INSTALL A
+   Installing A
+LIST
+   B
+   A
+END

@@ -37,8 +37,6 @@ def collision(s1, s2, raycast=True):
 
     if (raycast):
         if (s < 0 or r < 0 or r > 1):
-            if (s >= 0 and s <= 1):
-                return (p1[0] + s*dx1, p1[1] + s*dy1, True);
             return None
     elif (s <= 0 or s >= 1 or r <= 0 or r >= 1):
         return None
@@ -67,26 +65,75 @@ def isbetween(a,b,c):
         return False
     return c1
 
+
 def raycast(source, segments):
-    triangles = []
 
-    for segment in segments:
-        p1 = segment[0]
-        p2 = segment[1]
-        for i,triangle in enumerate(triangles[::]):
-            p3 = triangle[0]
-            p4 = triangle[1]
+    temp = []
+    for s1 in segments:
+        if (isbetween(s1[0], s1[1], source)):
+            temp.append(s1)
 
-            intersection1 = collision((source,p1),triangle)
-            intersection2 = collision((source,p2),triangle)
+    for s1 in temp:
+        segments.remove(s1)
 
-            intersection3 = collision((source,p3),segment)
-            intersection4 = collision((source,p4),segment)
+    points = set([p for segment in segments for p in segment])
 
-            pass
+    #Hack for evil intersecting barriers
+    for s1 in segments:
+        for s2 in segments:
+            intersection = collision(s1,s2,False)
+            if (intersection is not None):
+                points.add((intersection[0], intersection[1], True))
 
-        triangles.append([p1,p2])
-    print("tri",triangles)
+                if intersection in points:
+                    points.remove(intersection)
+
+    previous_distance = None
+    intersections = []
+    for point in clockwise(source,points):
+
+        closest_intersections = []
+
+        #Hack check if point is a evil intersecting barrier
+        for segment in segments:
+            intersection = collision((source,point),segment)
+            if (intersection is not None):
+                #print("Ray cast success", point, segment);
+                #print("Intersection", intersection);
+                closest_intersections.append(intersection)
+
+
+            #if (distance(source, intersection) < distance(source, closest_intersection)):
+
+        if point in closest_intersections: closest_intersections.remove(point)
+        closest_intersections = sorted(closest_intersections, key=lambda x: distance(source, x))
+        print(closest_intersections)
+        print(len(closest_intersections))
+
+        #If there is no segment between radiation and the point append the point
+        #Else check if the intersection point is further than the point 
+        if (len(closest_intersections) <= 0):
+            intersections.append(point)
+            previous_distance = distance(source, point)
+        elif (distance(source,closest_intersections[0]) >= distance(source,point)):
+
+            #Hack check which point is closer to the previous point if they
+            #were aligned along the source axis
+            closest_distance = distance(source,closest_intersections[0])
+            point_distance = distance(source,point)
+
+            if (previous_distance is not None):
+                a = abs(previous_distance - closest_distance)
+                b = abs(previous_distance - point_distance)
+
+            if (previous_distance is None or a<b):
+                intersections.append(closest_intersections[0])
+                intersections.append(point)
+                previous_distance = point_distance
+            else:
+                intersections.append(point)
+                intersections.append(closest_intersections[0])
+                previous_distance = closest_distance
 
     area = 0
     print(intersections)

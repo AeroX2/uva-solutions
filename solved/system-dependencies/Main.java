@@ -25,6 +25,8 @@ class Main {
 		while (scanner.hasNextLine()) {
 			String input = scanner.nextLine();
 			m.parse(input);
+
+			if (input.trim().equals("END")) break;
 		}
 	}
 
@@ -42,7 +44,7 @@ class Main {
 		//Echo command
 		System.out.println(command);
 
-		String[] args = command.trim().split("\\s+");
+		String[] args = command.split("\\s+");
 		switch (args[0]) {
 
 			case "DEPEND":
@@ -95,12 +97,13 @@ class Main {
 	}
 
 	private void install(String program) {
-		explicityInstalled.add(program);
 
 		if (installed.contains(program)) {
 			print(program, "is already installed.");
 			return;
 		}
+
+		explicityInstalled.add(program);
 
 		//Get the programs dependencies
 		Node node = dependencies.get(program);
@@ -154,7 +157,13 @@ class Main {
 		}
 
 		explicityInstalled.remove(program);
-		if (node != null) removeHelper(node);
+
+		if (node != null) {
+			removeHelper(node);
+		} else {
+			print("Removing", program);
+			installed.remove(program);
+		}
 	}
 
 	private void list() {
