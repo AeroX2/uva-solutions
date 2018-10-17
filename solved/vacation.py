@@ -1,51 +1,33 @@
-
-def max_destinations(list1, list2, switch):
-    print()
-
-    common_element = None
-    for e in list1:
-        if e in list2:
-            common_element = e
-            break
-
-    if (common_element is None):
-        return 0
-    
-    p1 = list1.index(common_element)
-    p2 = list2.index(common_element)
-
-    print(common_element)
-
-    cities = 0
-    #switch = True
-    while (p1 < len(list1) and p2 < len(list2)):
-
-        if (switch):
-            if (list1[p1] == list2[p2]):
-                print("Switch",p1,p2,switch)
-                cities += 1
-                switch = not switch
-            p1 += 1
+def lcs(a, b):
+    lengths = [[0 for j in range(len(b)+1)] for i in range(len(a)+1)]
+    # row 0 and column 0 are initialized to 0 already
+    for i, x in enumerate(a):
+        for j, y in enumerate(b):
+            if x == y:
+                lengths[i+1][j+1] = lengths[i][j] + 1
+            else:
+                lengths[i+1][j+1] = max(lengths[i+1][j], lengths[i][j+1])
+    # read the substring out from the matrix
+    result = ""
+    x, y = len(a), len(b)
+    while x != 0 and y != 0:
+        if lengths[x][y] == lengths[x-1][y]:
+            x -= 1
+        elif lengths[x][y] == lengths[x][y-1]:
+            y -= 1
         else:
-            if (list1[p1] == list2[p2]):
-                print("Switch",p1,p2,switch)
-                cities += 1
-                switch = not switch
-            p2 += 1
-            
-    return cities
+            assert a[x-1] == b[y-1]
+            result = a[x-1] + result
+            x -= 1
+            y -= 1
+    return result
 
 case = 0
 mom = input()
 while (mom != '#'):
     dad = input()
 
-    cities1 = max_destinations(mom, dad, False)
-    cities2 = max_destinations(mom, dad, True)
-    cities3 = max_destinations(dad, mom, False)
-    cities4 = max_destinations(dad, mom, True)
-    
-    print("Case #%d: you can visit at most %d cities" % (case+1,max(cities1,cities2,cities3,cities4)))
+    print("Case #%d: you can visit at most %d cities." % (case+1,len(lcs(mom,dad))))
 
     case+=1
     mom = input()
