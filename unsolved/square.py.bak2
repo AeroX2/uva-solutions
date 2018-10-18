@@ -1,0 +1,39 @@
+import copy
+
+def create_sides(numbers,groups,side_length):
+    #print(numbers)
+    #print(groups)
+
+    if (len(numbers) <= 0):
+        return False
+
+    if (len(groups) >= 4):
+        return True
+
+    if (len(groups) > 0 and sum(groups[-1]) != side_length):
+        for i,number in enumerate(numbers):
+            groups_copy = [row[:] for row in groups]
+            groups_copy[-1].append(number)
+
+            if (sum(groups_copy[-1]) <= side_length):
+                if (create_sides(numbers[:i]+numbers[i+1:],groups_copy,side_length)):
+                    return True
+
+        return False
+    else:
+        groups_copy = [row[:] for row in groups]
+        groups_copy.append([])
+
+        return create_sides(numbers,groups_copy,side_length)
+
+for _ in range(int(input())):
+    numbers = list(map(int,input().split()))[1:]
+
+    div,rem = divmod(sum(numbers),4)
+    if (rem % 4 == 0):
+        if (create_sides(numbers,[],div)):
+            print('yes')
+        else:
+            print('no')
+    else:
+        print('no')

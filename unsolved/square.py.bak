@@ -1,0 +1,36 @@
+import copy
+
+def create_sides(numbers,groups,current_group,side_length):
+    print(numbers)
+    print(groups)
+
+    if (len(numbers) <= 0):
+        return False
+
+    if (current_group >= 4):
+        return True
+
+    group_sum = sum(groups)
+    if (group_sum == side_length):
+        groups = []
+        current_group += 1
+    group_sum = sum(groups)
+
+    for i,number in enumerate(numbers):
+        if (group_sum+number <= side_length):
+            if (create_sides(numbers[:i]+numbers[i+1:],groups+[number],current_group,side_length)):
+                return True
+    return False
+
+
+for _ in range(int(input())):
+    numbers = list(map(int,input().split()))[1:]
+
+    div,rem = divmod(sum(numbers),4)
+    if (rem % 4 == 0):
+        if (create_sides(numbers,[],0,div)):
+            print('yes')
+        else:
+            print('no')
+    else:
+        print('no')
