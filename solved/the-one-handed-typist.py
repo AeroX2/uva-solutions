@@ -10,7 +10,7 @@ fingers = {
         "7": "yhnujm",
         "8": "ik,",
         "9": "ol.",
-        "10": "ip;/"
+        "10": "p;/"
 }
 
 while True:
